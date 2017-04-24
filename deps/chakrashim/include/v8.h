@@ -301,6 +301,7 @@ class Local {
   friend class FunctionTemplateData;
   friend class HandleScope;
   friend class Integer;
+  friend class Message;
   friend class Number;
   friend class NumberObject;
   friend class Object;
@@ -348,6 +349,11 @@ class Local {
 
   T* val_;
 };
+
+template<>
+static Local<v8::Message> Local<v8::Message>::New(JsExceptionMetadata ref) {
+    return Local<v8::Message>(ref);
+}
 
 
 // Handle is an alias for Local for historical reasons.
@@ -2575,6 +2581,7 @@ class V8_EXPORT TryCatch {
   void CheckReportExternalException();
 
   JsValueRef error;
+  JsExceptionMetadata errorMetadata;
   TryCatch* prev;
   bool rethrow;
   bool user;

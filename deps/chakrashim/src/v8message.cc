@@ -23,8 +23,12 @@
 namespace v8 {
 
 MaybeLocal<String> Message::GetSourceLine(Local<Context> context) const {
-  // CHAKRA-TODO: Figure out how to transmit this info...?
-  return Local<String>();
+  JsValueRef result;
+  JsErrorCode errorCode = JsGetMetadataProperty((JsExceptionMetadata)this, JsExceptionMetadataPropertyType::SourceLine, &result);
+  if (errorCode != JsNoError) {
+      return Local<String>();
+  }
+  return Local<String>::New(result);
 }
 
 Local<String> Message::GetSourceLine() const {
@@ -32,13 +36,26 @@ Local<String> Message::GetSourceLine() const {
 }
 
 Handle<Value> Message::GetScriptResourceName() const {
-  // CHAKRA-TODO: Figure out how to transmit this info...?
-  return Handle<Value>();
+  JsValueRef result;
+  JsErrorCode errorCode = JsGetMetadataProperty((JsExceptionMetadata)this, JsExceptionMetadataPropertyType::SourceUrl, &result);
+  if (errorCode != JsNoError) {
+      return Handle<Value>();
+  }
+  return Handle<Value>::New(result);
 }
 
 Maybe<int> Message::GetLineNumber(Local<Context> context) const {
-  // CHAKRA-TODO: Figure out how to transmit this info...?
-  return Nothing<int>();
+  JsValueRef result;
+  JsErrorCode errorCode = JsGetMetadataProperty((JsExceptionMetadata)this, JsExceptionMetadataPropertyType::LineNumber, &result);
+  if (errorCode != JsNoError) {
+      return Nothing<int>();
+  }
+  int line;
+  errorCode = JsNumberToInt(result, &line);
+  if (errorCode != JsNoError) {
+      return Nothing<int>();
+  }
+  return Just<int>(line + 1);
 }
 
 int Message::GetLineNumber() const {
@@ -46,8 +63,17 @@ int Message::GetLineNumber() const {
 }
 
 Maybe<int> Message::GetStartColumn(Local<Context> context) const {
-  // CHAKRA-TODO: Figure out how to transmit this info...?
-  return Nothing<int>();
+  JsValueRef result;
+  JsErrorCode errorCode = JsGetMetadataProperty((JsExceptionMetadata)this, JsExceptionMetadataPropertyType::ColumnNumber, &result);
+  if (errorCode != JsNoError) {
+      return Nothing<int>();
+  }
+  int column;
+  errorCode = JsNumberToInt(result, &column);
+  if (errorCode != JsNoError) {
+      return Nothing<int>();
+  }
+  return Just<int>(column);
 }
 
 int Message::GetStartColumn() const {
@@ -55,8 +81,19 @@ int Message::GetStartColumn() const {
 }
 
 Maybe<int> Message::GetEndColumn(Local<Context> context) const {
-  // CHAKRA-TODO: Figure out how to transmit this info...?
-  return Nothing<int>();
+  int column = GetStartColumn();
+  JsValueRef result;
+  JsErrorCode errorCode = JsGetMetadataProperty((JsExceptionMetadata)this, JsExceptionMetadataPropertyType::Length, &result);
+  if (errorCode != JsNoError) {
+      return Nothing<int>();
+  }
+  int length;
+  errorCode = JsNumberToInt(result, &length);
+  if (errorCode != JsNoError) {
+      return Nothing<int>();
+  }
+
+  return Just<int>(column + length + 1);
 }
 
 int Message::GetEndColumn() const {

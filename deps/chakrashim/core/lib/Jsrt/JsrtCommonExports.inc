@@ -73,6 +73,8 @@
     JsCreateTypeError
     JsCreateURIError
     JsHasException
+    JsGetMetadataProperty
+    JsExperimentalGetAndClearExceptionWithMetadata
     JsGetAndClearException
     JsSetException
     JsGetRuntimeMemoryUsage

@@ -25,9 +25,10 @@ namespace v8 {
 
 TryCatch::TryCatch(Isolate* isolate)
     : error(JS_INVALID_REFERENCE),
+      errorMetadata(JS_EXCEPTION_METADATA_INVALID_REFERENCE),
       rethrow(false),
       user(true),
-      verbose(false) {
+      verbose(false){
   jsrt::IsolateShim * isolateShim = jsrt::IsolateShim::GetCurrent();
   prev = isolateShim->tryCatchStackTop;
   isolateShim->tryCatchStackTop = this;
@@ -79,12 +80,14 @@ void TryCatch::GetAndClearException() {
 
   if (hasException) {
     JsValueRef exceptionRef;
-    errorCode = JsGetAndClearException(&exceptionRef);
+    JsExceptionMetadata metadata;
+    errorCode = JsExperimentalGetAndClearExceptionWithMetadata(&exceptionRef, &metadata);
     // We came here through JsHasException, so script shouldn't be in disabled
     // state.
     CHAKRA_ASSERT(errorCode != JsErrorInDisabledState);
     if (errorCode == JsNoError) {
       error = exceptionRef;
+      errorMetadata = metadata;
     }
   }
 }
@@ -146,10 +149,7 @@ Local<Value> TryCatch::StackTrace() const {
 }
 
 Local<v8::Message> TryCatch::Message() const {
-  // return an empty ref for now, so no nulls/empty messages will be printed
-  // should be changed once we understand how to retreive the info for each
-  // errror message
-  return Local<v8::Message>();
+    return Local<v8::Message>::New(errorMetadata);
 }
 
 void TryCatch::SetVerbose(bool value) {

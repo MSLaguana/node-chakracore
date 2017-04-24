@@ -8,6 +8,7 @@
 #include "JsrtExternalArrayBuffer.h"
 #include "jsrtHelper.h"
 
+#include "JsrtExceptionMetadata.h"
 #include "JsrtSourceHolder.h"
 #include "ByteCode/ByteCodeSerializer.h"
 #include "Common/ByteSwap.h"
@@ -16,6 +17,7 @@
 #include "Library/JavascriptPromise.h"
 #include "Base/ThreadContextTlsEntry.h"
 #include "Codex/Utf8Helper.h"
+#include "Library/RuntimeLibraryPch.h"
 
 // Parser Includes
 #include "cmperr.h"     // For ERRnoMemory
@@ -2504,6 +2506,210 @@ CHAKRA_API JsHasException(_Out_ bool *hasException)
     *hasException = scriptContext->HasRecordedException();
 
     return JsNoError;
+}
+
+CHAKRA_API JsGetMetadataProperty(_In_ JsExceptionMetadata metadata, _In_ JsExceptionMetadataPropertyType property, _Out_ JsValueRef *result)
+{
+    PARAM_NOT_NULL(metadata);
+    PARAM_NOT_NULL(result);
+    *result = nullptr;
+
+    JsrtExceptionMetadata *exceptionMetadata = JsrtExceptionMetadata::FromHandle(metadata);
+
+    switch (property)
+    {
+    case JsExceptionMetadataPropertyType::SourceUrl:
+        *result = exceptionMetadata->sourceUrl;
+        break;
+    case JsExceptionMetadataPropertyType::SourceLine:
+        *result = exceptionMetadata->sourceLine;
+        break;
+    case JsExceptionMetadataPropertyType::LineNumber:
+        *result = exceptionMetadata->lineNumber;
+        break;
+    case JsExceptionMetadataPropertyType::ColumnNumber:
+        *result = exceptionMetadata->columnNumber;
+        break;
+    case JsExceptionMetadataPropertyType::Length:
+        *result = exceptionMetadata->length;
+        break;
+    default:
+        return JsErrorInvalidArgument;
+    }
+
+    return JsNoError;
+}
+
+CHAKRA_API JsExperimentalGetAndClearExceptionWithMetadata(_Out_ JsValueRef *exception, _Out_ JsExceptionMetadata *metadata)
+{
+    PARAM_NOT_NULL(exception);
+    PARAM_NOT_NULL(metadata);
+    *exception = nullptr;
+    *metadata = nullptr;
+
+    JsrtContext *currentContext = JsrtContext::GetCurrent();
+
+    if (currentContext == nullptr)
+    {
+        return JsErrorNoCurrentContext;
+    }
+
+    Js::ScriptContext *scriptContext = currentContext->GetScriptContext();
+    Assert(scriptContext != nullptr);
+
+    if (scriptContext->GetRecycler() && scriptContext->GetRecycler()->IsHeapEnumInProgress())
+    {
+        return JsErrorHeapEnumInProgress;
+    }
+    else if (scriptContext->GetThreadContext()->IsInThreadServiceCallback())
+    {
+        return JsErrorInThreadServiceCallback;
+    }
+
+    if (scriptContext->GetThreadContext()->IsExecutionDisabled())
+    {
+        return JsErrorInDisabledState;
+    }
+
+    HRESULT hr = S_OK;
+    Js::JavascriptExceptionObject *recordedException = nullptr;
+
+    BEGIN_TRANSLATE_OOM_TO_HRESULT
+        recordedException = scriptContext->GetAndClearRecordedException();
+    END_TRANSLATE_OOM_TO_HRESULT(hr)
+
+        if (hr == E_OUTOFMEMORY)
+        {
+            recordedException = scriptContext->GetThreadContext()->GetRecordedException();
+        }
+    if (recordedException == nullptr)
+    {
+        return JsErrorInvalidArgument;
+    }
+
+    *exception = recordedException->GetThrownObject(nullptr);
+
+    if (*exception == nullptr)
+    {
+        // TODO: How does this impact TTD?
+        return JsErrorInvalidArgument;
+    }
+
+    JsrtExceptionMetadata* exceptionMetadata = RecyclerNew(scriptContext->GetRecycler(), JsrtExceptionMetadata);
+
+    Js::FunctionBody *functionBody = recordedException->GetFunctionBody();
+
+    return ContextAPIWrapper<false>([&](Js::ScriptContext* scriptContext, TTDRecorder& _actionEntryPopper) -> JsErrorCode {
+        if (functionBody == nullptr)
+        {
+            // This is probably a parse error. We can get the error location metadata from the thrown object.
+            const Js::PropertyRecord *record;
+
+            scriptContext->GetOrAddPropertyRecord(_u("line"), &record);
+            exceptionMetadata->lineNumber = Js::JavascriptOperators::ToNumber(Js::JavascriptOperators::OP_GetProperty(*exception, record->GetPropertyId(), scriptContext), scriptContext);
+
+            scriptContext->GetOrAddPropertyRecord(_u("column"), &record);
+            exceptionMetadata->columnNumber = Js::JavascriptOperators::ToNumber(Js::JavascriptOperators::OP_GetProperty(*exception, record->GetPropertyId(), scriptContext), scriptContext);
+
+            exceptionMetadata->length = Js::JavascriptOperators::ToNumber(Js::JavascriptOperators::OP_GetProperty(*exception, Js::PropertyIds::length, scriptContext), scriptContext);
+
+            exceptionMetadata->sourceLine = Js::JavascriptConversion::ToString(Js::JavascriptOperators::OP_GetProperty(*exception, Js::PropertyIds::source, scriptContext), scriptContext);
+
+            // TODO: Populate this at compile exception time
+            scriptContext->GetOrAddPropertyRecord(_u("url"), &record);
+            exceptionMetadata->sourceUrl = Js::JavascriptConversion::ToString(Js::JavascriptOperators::OP_GetProperty(*exception, record->GetPropertyId(), scriptContext), scriptContext);
+        }
+        else
+        {
+            uint32 offset = recordedException->GetByteCodeOffset();
+            ULONG line;
+            LONG column;
+            if (functionBody->GetUtf8SourceInfo()->GetIsLibraryCode() ||
+                !functionBody->GetLineCharOffset(offset, &line, &column)) {
+                line = 0;
+                column = 0;
+            }
+
+            exceptionMetadata->lineNumber = Js::JavascriptNumber::ToVar(static_cast<uint64>(line), scriptContext);
+            exceptionMetadata->columnNumber = Js::JavascriptNumber::ToVar(static_cast<uint64>(column), scriptContext);
+            exceptionMetadata->length = Js::JavascriptNumber::ToVar(0, scriptContext);
+            
+            exceptionMetadata->sourceUrl = Js::JavascriptString::NewCopySz(functionBody->GetSourceContextInfo()->url, scriptContext);
+
+            Js::Utf8SourceInfo* sourceInfo = functionBody->GetUtf8SourceInfo();
+            sourceInfo->EnsureLineOffsetCache();
+            JsUtil::LineOffsetCache<Recycler> *cache = sourceInfo->GetLineOffsetCache();
+
+            LPCUTF8 functionSource = sourceInfo->GetSource(_u("Jsrt::JsExperimentalGetAndClearExceptionWithMetadata"));
+
+            charcount_t startByteOffset;
+            charcount_t endByteOffset;
+            charcount_t startCharOffset;
+            charcount_t endCharOffset;
+
+            if (line >= cache->GetLineCount())
+            {
+                // ??
+                return JsErrorInvalidArgument;
+            }
+            startCharOffset = cache->GetCharacterOffsetForLine(line, &startByteOffset);
+
+            if (line + 1 >= cache->GetLineCount())
+            {
+                endByteOffset = functionBody->LengthInBytes();
+                endCharOffset = functionBody->LengthInChars();
+            }
+            else
+            {
+                // TODO: this includes the newline character(s) and we want to exclude them
+                endCharOffset = cache->GetCharacterOffsetForLine(line + 1, &endByteOffset);
+
+                if (functionSource[endByteOffset-1] == _u('\n'))
+                {
+                    // This may have been \r\n
+                    endCharOffset--;
+                    endByteOffset--;
+                    if (functionSource[endByteOffset-1] == _u('\r'))
+                    {
+                        endCharOffset--;
+                        endByteOffset--;
+                    }
+                }
+                else 
+                {
+                    utf8::DecodeOptions options = utf8::doAllowThreeByteSurrogates;
+                    LPCUTF8 potentialNewlineStart = functionSource + endByteOffset - 3;
+                    char16 decodedCharacter = utf8::Decode(potentialNewlineStart, functionSource+endByteOffset, options);
+                    if (decodedCharacter == 0x2028 || decodedCharacter == 0x2029)
+                    {
+                        endCharOffset--;
+                        endByteOffset -= 3;
+                    }
+                }
+            }
+
+            LPCUTF8 functionStart = functionSource + startByteOffset;
+
+            Js::BufferStringBuilder builder(endCharOffset - startCharOffset, scriptContext);
+            utf8::DecodeOptions options = sourceInfo->IsCesu8() ? utf8::doAllowThreeByteSurrogates : utf8::doDefault;
+            utf8::DecodeUnitsInto(builder.DangerousGetWritableBuffer(), functionStart, functionSource + endByteOffset, options);
+
+            exceptionMetadata->sourceLine = builder.ToString();
+        }
+
+        // TODO: Update TTD to reflect new function
+#if ENABLE_TTD
+        if (hr != E_OUTOFMEMORY)
+        {
+            PERFORM_JSRT_TTD_RECORD_ACTION(scriptContext, RecordJsRTGetAndClearException);
+            PERFORM_JSRT_TTD_RECORD_ACTION_RESULT(scriptContext, exception);
+        }
+#endif
+
+        *metadata = exceptionMetadata->ToHandle();
+
+        return JsNoError;
+    });
 }
 
 CHAKRA_API JsGetAndClearException(_Out_ JsValueRef *exception)
