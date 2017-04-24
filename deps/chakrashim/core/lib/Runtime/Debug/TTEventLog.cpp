@@ -562,6 +562,7 @@ namespace TTD
         this->m_eventListVTable[(uint32)NSLogEvents::EventKind::AllocateFunctionActionTag] = { NSLogEvents::ContextExecuteKind::ContextAPIWrapper, NSLogEvents::AllocateFunctionAction_Execute, nullptr, NSLogEvents::JsRTVarsWithIntegralUnionArgumentAction_Emit<NSLogEvents::EventKind::AllocateFunctionActionTag>, NSLogEvents::JsRTVarsWithIntegralUnionArgumentAction_Parse<NSLogEvents::EventKind::AllocateFunctionActionTag> };
 
         this->m_eventListVTable[(uint32)NSLogEvents::EventKind::HostExitProcessTag] = { NSLogEvents::ContextExecuteKind::ContextAPIWrapper, NSLogEvents::HostProcessExitAction_Execute, nullptr, NSLogEvents::JsRTVarsWithIntegralUnionArgumentAction_Emit<NSLogEvents::EventKind::HostExitProcessTag>, NSLogEvents::JsRTVarsWithIntegralUnionArgumentAction_Parse<NSLogEvents::EventKind::HostExitProcessTag> };
+        this->m_eventListVTable[(uint32)NSLogEvents::EventKind::GetAndClearExceptionWithMetadataActionTag] = { NSLogEvents::ContextExecuteKind::None, NSLogEvents::GetAndClearExceptionWithMetadataAction_Execute, nullptr, NSLogEvents::JsRTVarsArgumentAction_Emit<NSLogEvents::EventKind::GetAndClearExceptionWithMetadataActionTag>, NSLogEvents::JsRTVarsArgumentAction_Parse<NSLogEvents::EventKind::GetAndClearExceptionWithMetadataActionTag> };
         this->m_eventListVTable[(uint32)NSLogEvents::EventKind::GetAndClearExceptionActionTag] = { NSLogEvents::ContextExecuteKind::None, NSLogEvents::GetAndClearExceptionAction_Execute, nullptr, NSLogEvents::JsRTVarsArgumentAction_Emit<NSLogEvents::EventKind::GetAndClearExceptionActionTag>, NSLogEvents::JsRTVarsArgumentAction_Parse<NSLogEvents::EventKind::GetAndClearExceptionActionTag> };
         this->m_eventListVTable[(uint32)NSLogEvents::EventKind::SetExceptionActionTag] = { NSLogEvents::ContextExecuteKind::ContextAPINoScriptWrapper, NSLogEvents::SetExceptionAction_Execute, nullptr, NSLogEvents::JsRTVarsWithIntegralUnionArgumentAction_Emit<NSLogEvents::EventKind::SetExceptionActionTag>, NSLogEvents::JsRTVarsWithIntegralUnionArgumentAction_Parse<NSLogEvents::EventKind::SetExceptionActionTag> };
 
@@ -2630,6 +2631,14 @@ namespace TTD
         eAction->u_iVal = exitCode;
 
         actionPopper.InitializeWithEventAndEnter(evt);
+    }
+
+    void EventLog::RecordJsRTGetAndClearExceptionWithMetadata(TTDJsRTActionResultAutoRecorder& actionPopper)
+    {
+        NSLogEvents::JsRTVarsArgumentAction* gcAction = nullptr;
+        NSLogEvents::EventLogEntry* evt = this->RecordGetInitializedEvent<NSLogEvents::JsRTVarsArgumentAction, NSLogEvents::EventKind::GetAndClearExceptionWithMetadataActionTag>(&gcAction);
+
+        actionPopper.InitializeWithEventAndEnterWResult(evt, &(gcAction->Result));
     }
 
     void EventLog::RecordJsRTGetAndClearException(TTDJsRTActionResultAutoRecorder& actionPopper)

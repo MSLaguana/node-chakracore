@@ -2540,7 +2540,7 @@ CHAKRA_API JsGetMetadataProperty(_In_ JsExceptionMetadata metadata, _In_ JsExcep
     return JsNoError;
 }
 
-CHAKRA_API JsExperimentalGetAndClearExceptionWithMetadata(_Out_ JsValueRef *exception, _Out_ JsExceptionMetadata *metadata)
+CHAKRA_API JsGetAndClearExceptionWithMetadata(_Out_ JsValueRef *exception, _Out_ JsExceptionMetadata *metadata)
 {
     PARAM_NOT_NULL(exception);
     PARAM_NOT_NULL(metadata);
@@ -2591,7 +2591,7 @@ CHAKRA_API JsExperimentalGetAndClearExceptionWithMetadata(_Out_ JsValueRef *exce
 
     if (*exception == nullptr)
     {
-        // TODO: How does this impact TTD?
+        // TODO: How does this early bailout impact TTD?
         return JsErrorInvalidArgument;
     }
 
@@ -2661,9 +2661,11 @@ CHAKRA_API JsExperimentalGetAndClearExceptionWithMetadata(_Out_ JsValueRef *exce
             }
             else
             {
-                // TODO: this includes the newline character(s) and we want to exclude them
                 endCharOffset = cache->GetCharacterOffsetForLine(line + 1, &endByteOffset);
 
+                // The offsets above point to the start of the following line,
+                // while we need to find the end of the current line.
+                // To do so, just step back over the preceeding newline character(s)
                 if (functionSource[endByteOffset-1] == _u('\n'))
                 {
                     // This may have been \r\n
@@ -2697,11 +2699,10 @@ CHAKRA_API JsExperimentalGetAndClearExceptionWithMetadata(_Out_ JsValueRef *exce
             exceptionMetadata->sourceLine = builder.ToString();
         }
 
-        // TODO: Update TTD to reflect new function
 #if ENABLE_TTD
         if (hr != E_OUTOFMEMORY)
         {
-            PERFORM_JSRT_TTD_RECORD_ACTION(scriptContext, RecordJsRTGetAndClearException);
+            PERFORM_JSRT_TTD_RECORD_ACTION(scriptContext, RecordJsRTGetAndClearExceptionWithMetadata);
             PERFORM_JSRT_TTD_RECORD_ACTION_RESULT(scriptContext, exception);
         }
 #endif

@@ -431,6 +431,48 @@ namespace TTD
             throw TTDebuggerAbortException::CreateAbortEndOfLog(_u("End of log reached with Host Process Exit -- returning to top-level."));
         }
 
+        void GetAndClearExceptionWithMetadataAction_Execute(const EventLogEntry* evt, ThreadContextTTD* executeContext)
+        {
+            TTD_REPLAY_ACTIVE_CONTEXT(executeContext);
+
+            HRESULT hr = S_OK;
+            Js::JavascriptExceptionObject *recordedException = nullptr;
+
+            BEGIN_TRANSLATE_OOM_TO_HRESULT
+                recordedException = ctx->GetAndClearRecordedException();
+            END_TRANSLATE_OOM_TO_HRESULT(hr)
+
+                Js::Var exception = nullptr;
+            if (recordedException != nullptr)
+            {
+                exception = recordedException->GetThrownObject(nullptr);
+            }
+
+            if (exception != nullptr)
+            {
+                Js::FunctionBody *functionBody = recordedException->GetFunctionBody();
+                if (functionBody == nullptr)
+                {
+                    const Js::PropertyRecord *record;
+                    Js::ScriptContext* scriptContext = executeContext->GetActiveScriptContext();
+
+                    scriptContext->GetOrAddPropertyRecord(_u("line"), &record);
+                    Js::JavascriptOperators::ToNumber(Js::JavascriptOperators::OP_GetProperty(exception, record->GetPropertyId(), scriptContext), scriptContext);
+
+                    scriptContext->GetOrAddPropertyRecord(_u("column"), &record);
+                    Js::JavascriptOperators::ToNumber(Js::JavascriptOperators::OP_GetProperty(exception, record->GetPropertyId(), scriptContext), scriptContext);
+
+                    Js::JavascriptOperators::ToNumber(Js::JavascriptOperators::OP_GetProperty(exception, Js::PropertyIds::length, scriptContext), scriptContext);
+
+                    Js::JavascriptConversion::ToString(Js::JavascriptOperators::OP_GetProperty(exception, Js::PropertyIds::source, scriptContext), scriptContext);
+
+                    scriptContext->GetOrAddPropertyRecord(_u("url"), &record);
+                    Js::JavascriptConversion::ToString(Js::JavascriptOperators::OP_GetProperty(exception, record->GetPropertyId(), scriptContext), scriptContext);
+                }
+                JsRTActionHandleResultForReplay<JsRTVarsArgumentAction, EventKind::GetAndClearExceptionWithMetadataActionTag>(executeContext, evt, exception);
+            }
+        }
+
         void GetAndClearExceptionAction_Execute(const EventLogEntry* evt, ThreadContextTTD* executeContext)
         {
             TTD_REPLAY_ACTIVE_CONTEXT(executeContext);

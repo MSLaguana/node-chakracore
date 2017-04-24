@@ -74,7 +74,7 @@
     JsCreateURIError
     JsHasException
     JsGetMetadataProperty
-    JsExperimentalGetAndClearExceptionWithMetadata
+    JsGetAndClearExceptionWithMetadata
     JsGetAndClearException
     JsSetException
     JsGetRuntimeMemoryUsage

@@ -2361,7 +2361,7 @@ typedef unsigned short uint16_t;
     ///     The code <c>JsNoError</c> if the operation succeeded, a failure code otherwise.
     /// </returns>
     CHAKRA_API
-        JsExperimentalGetAndClearExceptionWithMetadata(
+        JsGetAndClearExceptionWithMetadata(
             _Out_ JsValueRef *exception,
             _Out_ JsExceptionMetadata *metadata);
 

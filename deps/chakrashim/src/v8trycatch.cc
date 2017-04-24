@@ -81,7 +81,7 @@ void TryCatch::GetAndClearException() {
   if (hasException) {
     JsValueRef exceptionRef;
     JsExceptionMetadata metadata;
-    errorCode = JsExperimentalGetAndClearExceptionWithMetadata(&exceptionRef, &metadata);
+    errorCode = JsGetAndClearExceptionWithMetadata(&exceptionRef, &metadata);
     // We came here through JsHasException, so script shouldn't be in disabled
     // state.
     CHAKRA_ASSERT(errorCode != JsErrorInDisabledState);
