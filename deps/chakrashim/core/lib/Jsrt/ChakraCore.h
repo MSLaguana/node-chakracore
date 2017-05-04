@@ -42,6 +42,33 @@ typedef enum JsModuleHostInfoKind
 } JsModuleHostInfoKind;
 
 /// <summary>
+///     The property to extract from a JsExceptionMetadata
+/// </summary>
+typedef enum _JsExceptionMetadataPropertyType
+{
+    /// <summary>
+    ///     A JavascriptString containing the line of source which caused the exception.
+    /// </summary>
+    SourceLine = 0,
+    /// <summary>
+    ///     A JavascriptNumber containing the line number where the exception was raised.
+    /// </summary>
+    LineNumber = 1,
+    /// <summary>
+    ///     A JavascriptNumber containing the column number where the exception was raised.
+    /// </summary>
+    ColumnNumber = 2,
+    /// <summary>
+    ///     A JavascriptNumber containing the length of the source code statement which caused the exception.
+    /// </summary>
+    Length = 3,
+    /// <summary>
+    ///     A JavascriptString containing the path of the source file which caused the exception.
+    /// </summary>
+    SourceUrl = 4,
+} JsExceptionMetadataPropertyType;
+
+/// <summary>
 ///     User implemented callback to fetch additional imported modules.
 /// </summary>
 /// <remarks>
@@ -164,6 +191,32 @@ JsGetModuleHostInfo(
     _Outptr_result_maybenull_ void** hostInfo);
 
 #ifdef CHAKRACOREBUILD_
+/// <summary>
+///     Returns the exception that caused the runtime of the current context to be in the
+///     exception state and resets the exception state for that runtime. Also returns additional
+///     metadata relating to the exception
+/// </summary>
+/// <remarks>
+///     <para>
+///     If the runtime of the current context is not in an exception state, this API will return
+///     <c>JsErrorInvalidArgument</c>. If the runtime is disabled, this will return an exception
+///     indicating that the script was terminated, but it will not clear the exception (the
+///     exception will be cleared if the runtime is re-enabled using
+///     <c>JsEnableRuntimeExecution</c>).
+///     </para>
+///     <para>
+///     Requires an active script context.
+///     </para>
+/// </remarks>
+/// <param name="exception">The exception for the runtime of the current context.</param>
+/// <param name="metadata">The exception metadata for the runtime of the current context.</param>
+/// <returns>
+///     The code <c>JsNoError</c> if the operation succeeded, a failure code otherwise.
+/// </returns>
+CHAKRA_API
+JsGetAndClearExceptionWithMetadata(
+    _Out_ JsValueRef *metadata);
+
 /// <summary>
 ///     Called by the runtime to load the source code of the serialized script.
 /// </summary>

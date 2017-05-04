@@ -537,6 +537,7 @@ namespace TTD
         TTD_CREATE_EVENTLIST_VTABLE_ENTRY_COMMON(AllocateFunctionActionTag, ContextAPIWrapper, JsRTSingleVarScalarArgumentAction, AllocateFunctionAction_Execute);
 
         TTD_CREATE_EVENTLIST_VTABLE_ENTRY_COMMON(HostExitProcessTag, ContextAPIWrapper, JsRTIntegralArgumentAction, HostProcessExitAction_Execute);
+        TTD_CREATE_EVENTLIST_VTABLE_ENTRY_COMMON(GetAndClearExceptionWithMetadataActionTag, None, JsRTResultOnlyAction, GetAndClearExceptionWithMetadataAction_Execute);
         TTD_CREATE_EVENTLIST_VTABLE_ENTRY_COMMON(GetAndClearExceptionActionTag, None, JsRTResultOnlyAction, GetAndClearExceptionAction_Execute);
         TTD_CREATE_EVENTLIST_VTABLE_ENTRY_COMMON(SetExceptionActionTag, ContextAPINoScriptWrapper, JsRTSingleVarScalarArgumentAction, SetExceptionAction_Execute);
 
@@ -2101,6 +2102,15 @@ namespace TTD
 
         actionPopper.InitializeWithEventAndEnter(evt);
     }
+
+    void EventLog::RecordJsRTGetAndClearExceptionWithMetadata(TTDJsRTActionResultAutoRecorder& actionPopper)
+    {
+        NSLogEvents::JsRTResultOnlyAction* gcAction = nullptr;
+        NSLogEvents::EventLogEntry* evt = this->RecordGetInitializedEvent<NSLogEvents::JsRTResultOnlyAction, NSLogEvents::EventKind::GetAndClearExceptionWithMetadataActionTag>(&gcAction);
+
+        actionPopper.InitializeWithEventAndEnterWResult(evt, &(gcAction->Result));
+    }
+
 
     void EventLog::RecordJsRTGetAndClearException(TTDJsRTActionResultAutoRecorder& actionPopper)
     {

@@ -23,13 +23,23 @@
 namespace v8 {
 
 Local<String> Message::Get() const {
-  // CHAKRA-TODO: Figure out what to do here
+  // TODO
   return Local<String>();
 }
 
 MaybeLocal<String> Message::GetSourceLine(Local<Context> context) const {
-  // CHAKRA-TODO: Figure out how to transmit this info...?
-  return Local<String>();
+  JsPropertyIdRef source = jsrt::IsolateShim::GetCurrent()
+    ->GetCachedPropertyIdRef(jsrt::CachedPropertyIdRef::source);
+  if (source == JS_INVALID_REFERENCE) {
+    return Local<String>();
+  }
+
+  JsValueRef result;
+  if (JsGetProperty((JsValueRef)this, source, &result) != JsNoError) {
+    return Local<String>();
+  }
+
+  return Local<String>::New(result);
 }
 
 Local<String> Message::GetSourceLine() const {
@@ -37,23 +47,45 @@ Local<String> Message::GetSourceLine() const {
 }
 
 ScriptOrigin Message::GetScriptOrigin() const {
-  // CHAKRA-TODO: Figure out what to do here
+  // TODO
   return ScriptOrigin(Local<String>());
 }
 
-Handle<Value> Message::GetScriptResourceName() const {
-  // CHAKRA-TODO: Figure out how to transmit this info...?
-  return Handle<Value>();
-}
-
 Local<StackTrace> Message::GetStackTrace() const {
-  // CHAKRA-TODO: Figure out what to do here
+  // TODO
   return Local<StackTrace>();
 }
 
+Handle<Value> Message::GetScriptResourceName() const {
+  JsPropertyIdRef url = jsrt::IsolateShim::GetCurrent()
+    ->GetCachedPropertyIdRef(jsrt::CachedPropertyIdRef::url);
+  if (url == JS_INVALID_REFERENCE) {
+    return Local<Value>();
+  }
+
+  JsValueRef result;
+  if (JsGetProperty((JsValueRef)this, url, &result) != JsNoError) {
+    return Local<Value>();
+  }
+  return Handle<Value>::New(result);
+}
+
 Maybe<int> Message::GetLineNumber(Local<Context> context) const {
-  // CHAKRA-TODO: Figure out how to transmit this info...?
-  return Nothing<int>();
+  JsPropertyIdRef lineProp = jsrt::IsolateShim::GetCurrent()
+    ->GetCachedPropertyIdRef(jsrt::CachedPropertyIdRef::line);
+  if (lineProp == JS_INVALID_REFERENCE) {
+    return Nothing<int>();
+  }
+
+  JsValueRef result;
+  if (JsGetProperty((JsValueRef)this, lineProp, &result) != JsNoError) {
+    return Nothing<int>();
+  }
+  int line;
+  if (JsNumberToInt(result, &line) != JsNoError) {
+      return Nothing<int>();
+  }
+  return Just<int>(line + 1);
 }
 
 int Message::GetLineNumber() const {
@@ -61,8 +93,21 @@ int Message::GetLineNumber() const {
 }
 
 Maybe<int> Message::GetStartColumn(Local<Context> context) const {
-  // CHAKRA-TODO: Figure out how to transmit this info...?
-  return Nothing<int>();
+  JsPropertyIdRef columnProp = jsrt::IsolateShim::GetCurrent()
+    ->GetCachedPropertyIdRef(jsrt::CachedPropertyIdRef::column);
+  if (columnProp == JS_INVALID_REFERENCE) {
+    return Nothing<int>();
+  }
+
+  JsValueRef result;
+  if (JsGetProperty((JsValueRef)this, columnProp, &result) != JsNoError) {
+    return Nothing<int>();
+  }
+  int column;
+  if (JsNumberToInt(result, &column) != JsNoError) {
+      return Nothing<int>();
+  }
+  return Just<int>(column);
 }
 
 int Message::GetStartColumn() const {
@@ -70,8 +115,23 @@ int Message::GetStartColumn() const {
 }
 
 Maybe<int> Message::GetEndColumn(Local<Context> context) const {
-  // CHAKRA-TODO: Figure out how to transmit this info...?
-  return Nothing<int>();
+  int column = GetStartColumn();
+  JsPropertyIdRef lengthProp = jsrt::IsolateShim::GetCurrent()
+    ->GetCachedPropertyIdRef(jsrt::CachedPropertyIdRef::length);
+  if (lengthProp == JS_INVALID_REFERENCE) {
+    return Nothing<int>();
+  }
+
+  JsValueRef result;
+  if (JsGetProperty((JsValueRef)this, lengthProp, &result) != JsNoError) {
+    return Nothing<int>();
+  }
+  int length;
+  if (JsNumberToInt(result, &length) != JsNoError) {
+      return Nothing<int>();
+  }
+
+  return Just<int>(column + length + 1);
 }
 
 int Message::GetEndColumn() const {

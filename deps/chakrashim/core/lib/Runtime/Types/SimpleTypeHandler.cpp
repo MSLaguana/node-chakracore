@@ -1132,5 +1132,5 @@ namespace Js
 
     template class SimpleTypeHandler<1>;
     template class SimpleTypeHandler<2>;
-
+    template class SimpleTypeHandler<6>;
 }

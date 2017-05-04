@@ -116,4 +116,5 @@
     JsCreatePropertyId
     JsCopyPropertyId
     JsCreatePromise
+    JsGetAndClearExceptionWithMetadata
 #endif
