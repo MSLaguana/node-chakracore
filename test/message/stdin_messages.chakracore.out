@@ -1,56 +1,55 @@
 [stdin]
+[stdin]:1
+'use strict'; with(this){__filename}
+              ^^^^^
+
 SyntaxError: 'with' statements are not allowed in strict mode
-   at createScript (vm.js:*)
-   at runInThisContext (vm.js:*)
-   at Anonymous function ([stdin]-wrapper:*:*)
-   at Module.prototype._compile (module.js:*:*)
-   at evalScript (bootstrap_node.js:*:*)
-   at Anonymous function (bootstrap_node.js:*:*)
-   at emitNone (events.js:*:*)
-   at emit (events.js:*:*)
-   at endReadableNT (_stream_readable.js:*:*)
-   at _combinedTickCallback (internal/process/next_tick.js:*:*)
-
+   at createScript (vm.js:74:3)
+   at runInThisContext (vm.js:116:3)
+   at Anonymous function ([stdin]-wrapper:6:1)
+   at Module.prototype._compile (module.js:607:5)
+   at evalScript (bootstrap_node.js:410:5)
+   at Anonymous function (bootstrap_node.js:186:15)
+   at emitNone (events.js:110:7)
+   at emit (events.js:207:7)
+   at endReadableNT (_stream_readable.js:992:5)
+   at _combinedTickCallback (internal/process/next_tick.js:80:11)
 42
 42
 Error: hello
-   at Global code ([stdin]:*)
-   at Script.prototype.runInThisContext (vm.js:*:*)         
-   at runInThisContext (vm.js:*)
-   at Anonymous function ([stdin]-wrapper:*:*)
-   at Module.prototype._compile (module.js:*:*)
-   at evalScript (bootstrap_node.js:*:*)
-   at Anonymous function (bootstrap_node.js:*:*)
-   at emitNone (events.js:*:*)
-   at emit (events.js:*:*)
-   at endReadableNT (_stream_readable.js:*:*)
-
+   at Global code ([stdin]:1:1)
+   at Script.prototype.runInThisContext (vm.js:44:5)
+   at runInThisContext (vm.js:116:3)
+   at Anonymous function ([stdin]-wrapper:6:1)
+   at Module.prototype._compile (module.js:607:5)
+   at evalScript (bootstrap_node.js:410:5)
+   at Anonymous function (bootstrap_node.js:186:15)
+   at emitNone (events.js:110:7)
+   at emit (events.js:207:7)
+   at endReadableNT (_stream_readable.js:992:5)
 Error: hello
-   at Global code ([stdin]:*)
-   at Script.prototype.runInThisContext (vm.js:*:*)         
-   at runInThisContext (vm.js:*)
-   at Anonymous function ([stdin]-wrapper:*:*)
-   at Module.prototype._compile (module.js:*:*)
-   at evalScript (bootstrap_node.js:*:*)
-   at Anonymous function (bootstrap_node.js:*:*)
-   at emitNone (events.js:*:*)
-   at emit (events.js:*:*)
-   at endReadableNT (_stream_readable.js:*:*)
-
-
+   at Global code ([stdin]:1:15)
+   at Script.prototype.runInThisContext (vm.js:44:5)
+   at runInThisContext (vm.js:116:3)
+   at Anonymous function ([stdin]-wrapper:6:1)
+   at Module.prototype._compile (module.js:607:5)
+   at evalScript (bootstrap_node.js:410:5)
+   at Anonymous function (bootstrap_node.js:186:15)
+   at emitNone (events.js:110:7)
+   at emit (events.js:207:7)
+   at endReadableNT (_stream_readable.js:992:5)
 100
 ReferenceError: Variable undefined in strict mode
-   at Global code ([stdin]:*)
-   at Script.prototype.runInThisContext (vm.js:*:*)         
-   at runInThisContext (vm.js:*)
-   at Anonymous function ([stdin]-wrapper:*:*)
-   at Module.prototype._compile (module.js:*:*)
-   at evalScript (bootstrap_node.js:*:*)
-   at Anonymous function (bootstrap_node.js:*:*)
-   at emitNone (events.js:*:*)
-   at emit (events.js:*:*)
-   at endReadableNT (_stream_readable.js:*:*)
-
+   at Global code ([stdin]:1:28)
+   at Script.prototype.runInThisContext (vm.js:44:5)
+   at runInThisContext (vm.js:116:3)
+   at Anonymous function ([stdin]-wrapper:6:1)
+   at Module.prototype._compile (module.js:607:5)
+   at evalScript (bootstrap_node.js:410:5)
+   at Anonymous function (bootstrap_node.js:186:15)
+   at emitNone (events.js:110:7)
+   at emit (events.js:207:7)
+   at endReadableNT (_stream_readable.js:992:5)
 10
 10
 done
