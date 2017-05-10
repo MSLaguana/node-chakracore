@@ -179,7 +179,14 @@ Local<Value> TryCatch::StackTrace() const {
 }
 
 Local<v8::Message> TryCatch::Message() const {
-    return Local<v8::Message>::New(metadata);
+  if (metadata == JS_INVALID_REFERENCE) {
+    const_cast<TryCatch*>(this)->GetAndClearException();
+  }
+
+  if (metadata == JS_INVALID_REFERENCE) {
+    return Local<v8::Message>();
+  }
+  return Local<v8::Message>::New(metadata);
 }
 
 void TryCatch::SetVerbose(bool value) {
