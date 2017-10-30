@@ -85,7 +85,8 @@ PropertyDescriptor::PropertyDescriptor(Local<Value> get,
   }
 }
 
-PropertyDescriptor & PropertyDescriptor::operator=(PropertyDescriptor && other) {
+PropertyDescriptor &
+PropertyDescriptor::operator=(PropertyDescriptor && other) {
   private_ = other.private_;
   other.private_ = nullptr;
   return *this;

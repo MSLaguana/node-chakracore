@@ -95,7 +95,7 @@ class Work;
 };
 
 namespace v8 {
-  class PropertyDescriptor;
+class PropertyDescriptor;
 }
 
 namespace jsrt {
@@ -361,7 +361,9 @@ class Local {
   friend class Value;
   friend class JSON;
   friend class uvimpl::Work;
-  friend JsErrorCode jsrt::CreateV8PropertyDescriptor(JsValueRef descriptor, v8::PropertyDescriptor* result);
+  friend JsErrorCode jsrt::CreateV8PropertyDescriptor(
+    JsValueRef descriptor,
+    v8::PropertyDescriptor* result);
   template <class F> friend class FunctionCallbackInfo;
   template <class F> friend class MaybeLocal;
   template <class F> friend class PersistentBase;

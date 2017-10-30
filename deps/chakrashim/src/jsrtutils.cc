@@ -580,19 +580,23 @@ JsErrorCode CreatePropertyDescriptor(v8::PropertyAttribute attributes,
     descriptor);
 }
 
-JsErrorCode CreateV8PropertyDescriptor(JsValueRef descriptor, v8::PropertyDescriptor* result) {
+JsErrorCode CreateV8PropertyDescriptor(
+    JsValueRef descriptor,
+    v8::PropertyDescriptor* result) {
   IsolateShim * isolateShim = IsolateShim::GetCurrent();
-  JsPropertyIdRef valueIdRef = isolateShim->GetCachedPropertyIdRef(CachedPropertyIdRef::value);
+  JsPropertyIdRef valueIdRef = isolateShim
+    ->GetCachedPropertyIdRef(CachedPropertyIdRef::value);
   bool hasProperty = false;
-  IfJsErrorRet(JsHasProperty(descriptor,valueIdRef, &hasProperty));
+  IfJsErrorRet(JsHasProperty(descriptor, valueIdRef, &hasProperty));
 
   v8::PropertyDescriptor desc;
   if (hasProperty) {
     JsValueRef value;
     IfJsErrorRet(JsGetProperty(descriptor, valueIdRef, &value));
 
-    JsPropertyIdRef writableIdRef = isolateShim->GetCachedPropertyIdRef(CachedPropertyIdRef::writable);
-    IfJsErrorRet(JsHasProperty(descriptor,writableIdRef, &hasProperty));
+    JsPropertyIdRef writableIdRef = isolateShim
+      ->GetCachedPropertyIdRef(CachedPropertyIdRef::writable);
+    IfJsErrorRet(JsHasProperty(descriptor, writableIdRef, &hasProperty));
 
     if (hasProperty) {
       JsValueRef writableVar = JS_INVALID_REFERENCE;
@@ -600,13 +604,17 @@ JsErrorCode CreateV8PropertyDescriptor(JsValueRef descriptor, v8::PropertyDescri
 
       bool writable = false;
       IfJsErrorRet(ValueToBoolLikely(writableVar, &writable));
-      desc = v8::PropertyDescriptor(v8::Local<v8::Value>::New(value), writable);
+      desc = v8::PropertyDescriptor(
+        v8::Local<v8::Value>::New(value), writable);
     } else {
-      desc = v8::PropertyDescriptor(v8::Local<v8::Value>::New(value));
+      desc = v8::PropertyDescriptor(
+        v8::Local<v8::Value>::New(value));
     }
   } else {
-    JsPropertyIdRef getIdRef = isolateShim->GetCachedPropertyIdRef(CachedPropertyIdRef::get);
-    JsPropertyIdRef setIdRef = isolateShim->GetCachedPropertyIdRef(CachedPropertyIdRef::set);
+    JsPropertyIdRef getIdRef = isolateShim
+      ->GetCachedPropertyIdRef(CachedPropertyIdRef::get);
+    JsPropertyIdRef setIdRef = isolateShim
+      ->GetCachedPropertyIdRef(CachedPropertyIdRef::set);
 
     JsValueRef getValue = JS_INVALID_REFERENCE;
     JsValueRef setValue = JS_INVALID_REFERENCE;
@@ -614,11 +622,15 @@ JsErrorCode CreateV8PropertyDescriptor(JsValueRef descriptor, v8::PropertyDescri
     IfJsErrorRet(JsGetProperty(descriptor, getIdRef, &getValue));
     IfJsErrorRet(JsGetProperty(descriptor, setIdRef, &setValue));
 
-    desc = v8::PropertyDescriptor(v8::Local<v8::Value>::New(getValue), v8::Local<v8::Value>::New(setValue));
+    desc = v8::PropertyDescriptor(
+      v8::Local<v8::Value>::New(getValue),
+      v8::Local<v8::Value>::New(setValue));
   }
 
-  JsPropertyIdRef enumerableIdRef = isolateShim->GetCachedPropertyIdRef(CachedPropertyIdRef::enumerable);
-  JsPropertyIdRef configurableIdRef = isolateShim->GetCachedPropertyIdRef(CachedPropertyIdRef::configurable);
+  JsPropertyIdRef enumerableIdRef = isolateShim
+    ->GetCachedPropertyIdRef(CachedPropertyIdRef::enumerable);
+  JsPropertyIdRef configurableIdRef = isolateShim
+    ->GetCachedPropertyIdRef(CachedPropertyIdRef::configurable);
 
   IfJsErrorRet(JsHasProperty(descriptor, enumerableIdRef, &hasProperty));
   if (hasProperty) {
@@ -628,11 +640,12 @@ JsErrorCode CreateV8PropertyDescriptor(JsValueRef descriptor, v8::PropertyDescri
     IfJsErrorRet(ValueToBoolLikely(enumerableVar, &enumerable));
     desc.set_enumerable(enumerable);
   }
-  
+
   IfJsErrorRet(JsHasProperty(descriptor, configurableIdRef, &hasProperty));
   if (hasProperty) {
     JsValueRef configurableVar = JS_INVALID_REFERENCE;
-    IfJsErrorRet(JsGetProperty(descriptor, configurableIdRef, &configurableVar));
+    IfJsErrorRet(JsGetProperty(descriptor, configurableIdRef,
+                               &configurableVar));
     bool configurable = false;
     IfJsErrorRet(ValueToBoolLikely(configurableVar, &configurable));
     desc.set_configurable(configurable);
